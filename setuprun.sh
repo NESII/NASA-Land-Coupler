@@ -279,7 +279,7 @@ if [[ $RUNCONFIG == *"hyd"* ]]; then
       mkdir -p $rundir_member
       cp $data_hyd_member/namelist.hrldas $rundir_member
       cp $data_hyd_member/hydro.namelist  $rundir_member
-      cp $data_hyd_member/WRFHYDRO_PARMS/CHANPARM.TBL $rundir_member
+      cp $data_hyd_member/WRFHYDRO_PARMS/*.TBL $rundir_member
       ln -sf $data_hyd_member/WRFHYDRO_DOMAIN  $rundir_member/WRFHYDRO_DOMAIN
       ln -sf $data_hyd_member/WRFHYDRO_FORCING $rundir_member/WRFHYDRO_FORCING
       ln -sf $data_hyd_member/WRFHYDRO_PARMS   $rundir_member/WRFHYDRO_PARMS
@@ -288,7 +288,7 @@ if [[ $RUNCONFIG == *"hyd"* ]]; then
     if [ -z "$ensemble" ]; then
       cp $DATA_HYD/namelist.hrldas $RUNDIR
       cp $DATA_HYD/hydro.namelist  $RUNDIR
-      cp $DATA_HYD/WRFHYDRO_PARMS/CHANPARM.TBL $RUNDIR
+      cp $DATA_HYD/WRFHYDRO_PARMS/*.TBL $RUNDIR
       ln -sf $DATA_HYD/WRFHYDRO_DOMAIN  $RUNDIR/WRFHYDRO_DOMAIN
       ln -sf $DATA_HYD/WRFHYDRO_FORCING $RUNDIR/WRFHYDRO_FORCING
       ln -sf $DATA_HYD/WRFHYDRO_PARMS   $RUNDIR/WRFHYDRO_PARMS
@@ -351,6 +351,7 @@ for setting in ${settings}; do
   else
     value=${!envvar}
     value=`eval echo ${value}`
+    value="${value//\//\\\/}"
     sed -i "s/$setting/$value/g" $RUNDIR/nlc.runconfig
   fi
 done

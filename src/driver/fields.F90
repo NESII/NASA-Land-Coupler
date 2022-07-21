@@ -86,7 +86,7 @@ module Fields
     med_fld_type("vegetation_transpiration"                ,"et"   ,&
                  "W m-2",FLD_REMAP_BILINR,FLD_MASK_WTR,0)/)
 
-  type(med_fld_type),target,dimension(14)  :: fldsToLnd = (/&
+  type(med_fld_type),target,dimension(15)  :: fldsToLnd = (/&
     med_fld_type("liquid_fraction_of_soil_moisture_layer_1","smliqfracl1",&
                  "-",FLD_REMAP_BILINR,FLD_MASK_NNE,1),&
     med_fld_type("liquid_fraction_of_soil_moisture_layer_2","smliqfracl2",&
@@ -114,7 +114,9 @@ module Fields
     med_fld_type("soil_moisture_fraction"                  ,"smfrac"     ,&
                  "-",FLD_REMAP_BILINR,FLD_MASK_NNE,1),&
     med_fld_type("liquid_fraction_of_soil_moisture"        ,"smliqfrac"  ,&
-                 "-",FLD_REMAP_BILINR,FLD_MASK_NNE,0)/)
+                 "-",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
+    med_fld_type("ground_water_storage"                    ,"wa"         ,&
+                 "mm",FLD_REMAP_BILINR,FLD_MASK_NNE,0)/)
 
   type(med_fld_type),target,dimension(14)  :: fldsFrHyd = (/&
     med_fld_type("liquid_fraction_of_soil_moisture_layer_1","smliqfracl1",&
