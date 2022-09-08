@@ -1,12 +1,12 @@
 [submodule "src/wrf_hydro_nwm"]
 	path = src/wrf_hydro_nwm
-	url = https://github.com/NESII/wrf_hydro_nwm_public.git
+	url = https://github.com/esmf-org/wrf_hydro_nwm_public.git
 	branch = master
 [submodule "src/LISF"]
 	path = src/LISF
-	url = https://github.com/NESII/LISF.git
+	url = https://github.com/esmf-org/LISF.git
 	branch = feature/NUOPC
 [submodule "src/parflow"]
 	path = src/parflow
-	url = https://github.com/NESII/parflow.git
+	url = https://github.com/esmf-org/parflow.git
 	branch = feature/NUOPC
