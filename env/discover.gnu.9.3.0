@@ -1,10 +1,8 @@
 #!/bin/bash
 
 # check for NASA Land Coupler source directory
-if [ -z "${NLC_DIR}" ] ; then
-  echo "ERROR: Please set NLC_DIR to root directory of cloned repository."
-  exit 1
-fi
+NLC_DIR="${NLC_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
+export NLC_DIR=${NLC_DIR}
 if [ ! -d "${NLC_DIR}" ]; then
   echo "ERROR: ${NLC_DIR} directory does not exist."
   exit 1

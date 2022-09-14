@@ -65,7 +65,7 @@ if (ENABLE_LIS)
   endif ()
   set(NLC_LIS_INST $ENV{NLC_LIS_INST} CACHE FILEPATH "Path to NLC_LIS_INST")
   message("Build LIS:")
-  message("  run: ${CMAKE_BUILD_TOOL} nuopcinstall INSTPATH=${NLC_LIS_INST}")
+  message("  run: ${CMAKE_BUILD_TOOL} nuopcinstall INSTPATH=${NLC_LIS_INST} BUILD_TYPE=${CMAKE_BUILD_TYPE} COMPILER=${CMAKE_Fortran_COMPILER_ID}")
   message("   in: ${CMAKE_CURRENT_SOURCE_DIR}/src/LISF/lis/runmodes/nuopc_cpl_mode")
   message("")
 
@@ -75,7 +75,7 @@ if (ENABLE_LIS)
 
   add_custom_target(lis_nuopc
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/LISF/lis/runmodes/nuopc_cpl_mode"
-    COMMAND ${CMAKE_BUILD_TOOL} nuopcinstall INSTPATH=${NLC_LIS_INST})
+    COMMAND ${CMAKE_BUILD_TOOL} nuopcinstall INSTPATH=${NLC_LIS_INST} BUILD_TYPE=${CMAKE_BUILD_TYPE} COMPILER=${CMAKE_Fortran_COMPILER_ID})
 
   add_dependencies(NLC.exe lis_nuopc)
   target_link_libraries(NLC.exe PUBLIC ${NLC_LIS_INST}/liblis_nuopc.a)
