@@ -19,6 +19,8 @@ usage () {
   printf "  --compiler=COMPILER\n"
   printf "      compiler to use; valid options are 'intel.X.Y.Z', \n"
   printf "      'gnu.X.Y.Z'; default is system dependent.\n"
+  printf "  --build-type=BUILD_TYPE\n"
+  printf "      build type; valid options are 'debug', 'release'.\n"
   printf "  --auto\n"
   printf "      run non-interactive configuration\n"
   printf "  --verbose, -v\n"
@@ -33,6 +35,7 @@ settings () {
   printf "  NLC_DIR=${NLC_DIR}\n"
   printf "  SYSTEM=${SYSTEM}\n"
   printf "  COMPILER=${MYCOMPILER}\n"
+  printf "  BUILD_TYPE=${BUILD_TYPE}\n"
   printf "  INTERACTIVE=${INTERACTIVE}\n"
   printf "  VERBOSE=${VERBOSE}\n"
   printf "\n"
@@ -49,6 +52,7 @@ find_system () {
 NLC_DIR=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )" && pwd -P)
 SYSTEM=""
 MYCOMPILER=""
+BUILD_TYPE="Release"
 INTERACTIVE=true
 VERBOSE=false
 RC=0
@@ -63,6 +67,9 @@ while :; do
     --compiler=?*) MYCOMPILER=${1#*=} ;;
     --compiler) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
     --compiler=) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
+    --build-type=?*) BUILD_TYPE=${1#*=} ;;
+    --build-type) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
+    --build-type=) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
     --auto) INTERACTIVE=false ;;
     --auto=?*) printf "ERROR: $1 argument ignored.\n"; usage; exit 1 ;;
     --auto=) printf "ERROR: $1 argument ignored.\n"; usage; exit 1 ;;
@@ -128,7 +135,14 @@ fi
 if [ "${INTERACTIVE}" = true ]; then
   ./configure; RC=$?
 else
-  echo "" | ./configure; RC=$?
+  case ${BUILD_TYPE} in
+    debug | DEBUG | Debug)
+      echo -ne '\n-2' | ./configure; RC=$?
+      ;;
+    *)
+      echo '' | ./configure; RC=$?
+      ;;
+  esac
 fi
 if [ ! -f "make/configure.lis" ]; then
   RC=1
