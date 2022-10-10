@@ -17,7 +17,7 @@ module load mpi/impi/20.0.0.166
 module load tview/2019.0.4
 module load git/2.24.0
 module load cmake/3.15.5
-module load python/GEOSpyD/Ana2019.10_py2.7
+module load python/GEOSpyD/Min4.11.0_py3.9
 module list
 
 # define library paths
@@ -105,6 +105,8 @@ export NETCDF="${def_nlc_netcdf}"
 export WRF_HYDRO="1"
 
 # PARFLOW environment variables
+export PF_SRC="${NLC_DIR}/src/parflow"
+export PARFLOW_DIR="${NLC_DIR}/PARFLOW-INSTALL"
 export PARFLOW_HYPRE_DIR="${def_nlc_hypre}"
 export PARFLOW_HDF5_DIR="${def_nlc_hdf5}"
 export PARFLOW_SILO_DIR="${def_nlc_silo}"
@@ -118,6 +120,6 @@ export CMAKE_CXX_COMPILER="mpicxx"
 export CMAKE_Fortran_COMPILER="mpif90"
 export NLC_LIS_INST="${NLC_DIR}/LIS-INSTALL"
 export NLC_WRFHYDRO_INST="${NLC_DIR}/WRFHydro-INSTALL"
-export NLC_PARFLOW_INST="${NLC_DIR}/PARFLOW-INSTALL"
+export NLC_PARFLOW_INST="${PARFLOW_DIR}"
 export ESMFMKFILE="${def_nlc_libesmf}/esmf.mk"
 

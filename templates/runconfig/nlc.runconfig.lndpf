@@ -55,6 +55,7 @@ hydAttributes::
   Diagnostic = 0
   realize_all_import = false
   realize_all_export = false
+  prep_filename = __HYDPRP__
   filename = __HYDCFG__
   initialize_import = FLD_INIT_ZERO
   initialize_export = FLD_INIT_ZERO

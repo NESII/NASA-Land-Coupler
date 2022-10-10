@@ -328,7 +328,8 @@ fi
 if [[ $RUNCONFIG == *"pf"* ]]; then
   DATA_HYD=$DATA_ROOT/PARFLOW/$USECASE
   if [ -d $DATA_HYD ]; then
-    cp $DATA_HYD/* $RUNDIR/.
+    cp $DATA_HYD/*.py $RUNDIR/.
+    ln -s $DATA_HYD/PARFLOW_INPUTS $RUNDIR/PARFLOW_INPUTS
   else
     echo "ERROR: DATA_HYD directory not found [$DATA_HYD]"
     exit 1

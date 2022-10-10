@@ -17,7 +17,7 @@ module load cmake/3.15.5
 module load comp/gcc/9.3.0
 module load mpi/openmpi/4.0.4/gcc-9.3.0
 module load tview/2019.0.4
-module load python/GEOSpyD/Ana2019.10_py2.7
+module load python/GEOSpyD/Min4.11.0_py3.9
 module list
 
 # LIS environment variables
