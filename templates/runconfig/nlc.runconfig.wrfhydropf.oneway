@@ -61,8 +61,8 @@ gwrAttributes::
   realize_all_export = false
   prep_filename = __GWRPRP__
   filename = __GWRCFG__
-  initialize_import = FLD_INIT_ZERO
-  initialize_export = FLD_INIT_ZERO
+  initialize_import = __GWRINITIMP__
+  initialize_export = __GWRINITEXP__
   number_of_soil_layers = __GWRNSOIL__
   thickness_of_soil_layers = __GWRSLTHICK__
   check_import = FLD_CHECK_NEXTT
