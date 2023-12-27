@@ -325,7 +325,7 @@ if [[ $RUNCONFIG == *"lnd"* ]]; then
 fi
 
 # ParFlow setup
-if [[ $RUNCONFIG == *"pf"* ]]; then
+if [[ $RUNCONFIG == *"gwr"* ]]; then
   DATA_HYD=$DATA_ROOT/PARFLOW/$USECASE
   if [ -d $DATA_HYD ]; then
     cp $DATA_HYD/*.py $RUNDIR/.

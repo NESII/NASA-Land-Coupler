@@ -368,26 +368,6 @@ module ESM
               line=__LINE__, file=__FILE__, rcToReturn=rc)
             return
 #endif
-          case ('parflow')
-#ifdef NUOPCCAP_PARFLOW
-            if (allocated(petList)) then
-              call NUOPC_DriverAddComp(driver, "HYD", parflow_ss, &
-                petList=petList, comp=child, rc=rc)
-              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-                line=__LINE__, file=__FILE__)) return  ! bail out
-              deallocate(petList)
-            else
-              call NUOPC_DriverAddComp(driver, "HYD", parflow_ss, &
-                comp=child, rc=rc)
-              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-                line=__LINE__, file=__FILE__)) return  ! bail out
-            endif
-#else
-            call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
-              msg="PARFLOW model missing from build", &
-              line=__LINE__, file=__FILE__, rcToReturn=rc)
-            return
-#endif
           case default
             call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
               msg="invalid hyd_model: "//trim(model), &
@@ -430,56 +410,162 @@ module ESM
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, file=__FILE__)) return  ! bail out
 
-      ! get PET lists from config
-      call getPetListFromConfig(config, "pets_gwr:", petList=petList, rc=rc)
+      ! get instance count from config
+      call ESMF_ConfigGetAttribute(config, instCnt, &
+        label="instance_count_gwr:", default=1, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, file=__FILE__)) return  ! bail out
+      if (instCnt.gt.1) then
+        multiInst = .true.  ! default multi instance .true.
+      else
+        multiInst = .false. ! default multi instance .false.
+      endif
+      call ESMF_ConfigGetAttribute(config, multiInst, &
+        label="multi_instance_gwr:", default=multiInst, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, file=__FILE__)) return  ! bail out
+      if ((.NOT.multiInst) .AND. (instCnt.gt.1)) then
+        call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+          msg="multi_instance_gwr must be true for instance count gt 1", &
+          line=__LINE__, file=__FILE__, rcToReturn=rc)
+        return
+      elseif (instCnt.gt.999999) then
+        call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+          msg="instance_count_gwr must be less than 999999", &
+          line=__LINE__, file=__FILE__, rcToReturn=rc)
+        return
+      endif
 
-      ! SetServices for GWR
-      select case (model)
-        case ('parflow','default')
+      if (multiInst) then
+
+        ! generate the instance string format descriptor
+        write(maxStr,"(I0)") instCnt
+        write(instStrFmt,"(I0,A1,I0)") len_trim(maxStr),".",len_trim(maxStr)
+
+        ! check for overlapping PETs
+        call checkPetListFromConfig(config, "pets_gwr:", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+
+        do i=1, instCnt
+
+          write(compName,"(A4,I"//trim(instStrFmt)//")") "GWR-",i
+
+          ! get instance PET lists from config
+          call getPetListFromConfig(config, "pets_gwr:", instance=i, &
+            petList=petList, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+
+          ! SetServices for GWR
+          select case (model)
+            case ('parflow','default')
 #ifdef NUOPCCAP_PARFLOW
-          if (allocated(petList)) then
-            call NUOPC_DriverAddComp(driver, "GWR", parflow_ss, petList=petList, &
-              comp=child, rc=rc)
-            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-              line=__LINE__, file=__FILE__)) return  ! bail out
-            deallocate(petList)
-          else
-            call NUOPC_DriverAddComp(driver, "GWR", parflow_ss, comp=child, rc=rc)
-            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-              line=__LINE__, file=__FILE__)) return  ! bail out
-          endif
+              if (allocated(petList)) then
+                call NUOPC_DriverAddComp(driver, compName, parflow_ss, &
+                  petList=petList, comp=child, rc=rc)
+                if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                  line=__LINE__, file=__FILE__)) return  ! bail out
+                deallocate(petList)
+              else
+                call NUOPC_DriverAddComp(driver, compName, parflow_ss, &
+                  comp=child, rc=rc)
+                if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                  line=__LINE__, file=__FILE__)) return  ! bail out
+              endif
 #else
-          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
-            msg="PARFLOW model missing from build", &
-            line=__LINE__, file=__FILE__, rcToReturn=rc)
-          return
+              call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+                msg="PARFLOW model missing from build", &
+                line=__LINE__, file=__FILE__, rcToReturn=rc)
+              return
 #endif
-        case default
-          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
-            msg="invalid gwr_model: "//trim(model), &
-            line=__LINE__, file=__FILE__, rcToReturn=rc)
-          return
-      endselect
+            case default
+              call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+                msg="invalid gwr_model: "//trim(model), &
+                line=__LINE__, file=__FILE__, rcToReturn=rc)
+              return
+          endselect
 
-      call NUOPC_CompAttributeSet(child, name="Verbosity", value="0", rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeSet(child, name="Verbosity", value="0", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
 
-      ! read GWR attributes from config file into FreeFormat
-      attrFF = NUOPC_FreeFormatCreate(config, label="gwrAttributes::", &
-        relaxedflag=.true., rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, file=__FILE__)) return  ! bail out
-      call NUOPC_CompAttributeIngest(child, attrFF, addFlag=.true., rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, file=__FILE__)) return  ! bail out
-      call NUOPC_FreeFormatDestroy(attrFF, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, file=__FILE__)) return  ! bail out
+          ! read GWR attributes from config file into FreeFormat
+          attrFF = NUOPC_FreeFormatCreate(config, label="gwrAttributes::", &
+            relaxedflag=.true., rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeIngest(child, attrFF, addFlag=.true., rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_FreeFormatDestroy(attrFF, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeAdd(child, &
+            attrList=(/"multi_instance_gwr"/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call ESMF_AttributeSet(child, name="multi_instance_gwr", &
+            value="true", convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+        enddo
 
-    endif ! enabledGwr
+      else
+
+        ! get PET lists from config
+        call getPetListFromConfig(config, "pets_gwr:", petList=petList, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+
+        ! SetServices for GWR
+        select case (model)
+          case ('parflow','default')
+#ifdef NUOPCCAP_PARFLOW
+            if (allocated(petList)) then
+              call NUOPC_DriverAddComp(driver, "GWR", parflow_ss, &
+                petList=petList, comp=child, rc=rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, file=__FILE__)) return  ! bail out
+              deallocate(petList)
+            else
+              call NUOPC_DriverAddComp(driver, "GWR", parflow_ss, &
+                comp=child, rc=rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, file=__FILE__)) return  ! bail out
+            endif
+#else
+            call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+              msg="PARFLOW model missing from build", &
+              line=__LINE__, file=__FILE__, rcToReturn=rc)
+            return
+#endif
+          case default
+            call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+              msg="invalid gwr_model: "//trim(model), &
+              line=__LINE__, file=__FILE__, rcToReturn=rc)
+            return
+        endselect
+
+        call NUOPC_CompAttributeSet(child, name="Verbosity", value="0", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+
+        ! read GWR attributes from config file into FreeFormat
+        attrFF = NUOPC_FreeFormatCreate(config, label="gwrAttributes::", &
+          relaxedflag=.true., rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        call NUOPC_CompAttributeIngest(child, attrFF, addFlag=.true., rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        call NUOPC_FreeFormatDestroy(attrFF, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+
+      endif ! multiple instances
+
+    endif !enabledGwr
 
     ! #########
     ! Mediators
@@ -523,6 +609,53 @@ module ESM
         line=__LINE__, file=__FILE__)) return  ! bail out
 
       ! Pass multi instance setting to mediator
+      if (enabledLnd) then
+        call ESMF_ConfigFindLabel(config, label="instance_count_lnd:", &
+          isPresent=isPresent, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        if (isPresent) then
+          call ESMF_ConfigGetAttribute(config, instCnt, &
+            label="instance_count_lnd:", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeAdd(child, &
+            attrList=(/"instance_count_lnd"/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call ESMF_AttributeSet(child, name="instance_count_lnd", &
+            value=instCnt, convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+        endif
+        call ESMF_ConfigFindLabel(config, label="multi_instance_lnd:", &
+          isPresent=isPresent, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        if (isPresent) then
+          call ESMF_ConfigGetAttribute(config, multiInst, &
+            label="multi_instance_lnd:", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeAdd(child, &
+            attrList=(/"multi_instance_lnd"/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call ESMF_AttributeSet(child, name="multi_instance_lnd", &
+            value=multiInst, convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+        endif
+      else
+        call NUOPC_CompAttributeAdd(child, &
+          attrList=(/"instance_count_lnd"/), rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        call ESMF_AttributeSet(child, name="instance_count_lnd", &
+          value=0, convention="NUOPC", purpose="Instance", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      endif !enabledLnd
       if (enabledHyd) then
         call ESMF_ConfigFindLabel(config, label="instance_count_hyd:", &
           isPresent=isPresent, rc=rc)
@@ -560,7 +693,63 @@ module ESM
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, file=__FILE__)) return  ! bail out
         endif
+      else
+        call NUOPC_CompAttributeAdd(child, &
+          attrList=(/"instance_count_hyd"/), rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        call ESMF_AttributeSet(child, name="instance_count_hyd", &
+          value=0, convention="NUOPC", purpose="Instance", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
       endif !enabledHyd
+      if (enabledGwr) then
+        call ESMF_ConfigFindLabel(config, label="instance_count_gwr:", &
+          isPresent=isPresent, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        if (isPresent) then
+          call ESMF_ConfigGetAttribute(config, instCnt, &
+            label="instance_count_gwr:", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeAdd(child, &
+            attrList=(/"instance_count_gwr"/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call ESMF_AttributeSet(child, name="instance_count_gwr", &
+            value=instCnt, convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+        endif
+        call ESMF_ConfigFindLabel(config, label="multi_instance_gwr:", &
+          isPresent=isPresent, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        if (isPresent) then
+          call ESMF_ConfigGetAttribute(config, multiInst, &
+            label="multi_instance_gwr:", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call NUOPC_CompAttributeAdd(child, &
+            attrList=(/"multi_instance_gwr"/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+          call ESMF_AttributeSet(child, name="multi_instance_gwr", &
+            value=multiInst, convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, file=__FILE__)) return  ! bail out
+        endif
+      else
+        call NUOPC_CompAttributeAdd(child, &
+          attrList=(/"instance_count_gwr"/), rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+        call ESMF_AttributeSet(child, name="instance_count_gwr", &
+          value=0, convention="NUOPC", purpose="Instance", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, file=__FILE__)) return  ! bail out
+      endif !enabledGwr
 
     endif !enabledMed
 
@@ -951,7 +1140,7 @@ module ESM
       call NUOPC_DriverGetComp(driver, compList=connectorList, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, file=__FILE__)) return  ! bail out
-  
+
       do i=1, size(connectorList)
         ! get connector information
   !      call NUOPC_CompGet(connectorList(i), name=connectorName, verbosity=verbosity, &
@@ -986,7 +1175,7 @@ module ESM
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, file=__FILE__)) return  ! bail out
         endif
-  
+
         split = index(connectorName,"-TO-")
         if ((split .lt. 2) .OR. (split .ge. (len_trim(connectorName)-3))) then
           call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
@@ -994,10 +1183,10 @@ module ESM
             line=__LINE__, file=__FILE__, rcToReturn=rc)
           return
         endif
-  
+
         srcName = connectorName(1:split-1)
         dstName = connectorName(split+4:len_trim(connectorName))
-  
+
         ! remove ensemble index from srcName
         split = index(srcName,"-")
         if (split .gt. 1) then
@@ -1014,7 +1203,7 @@ module ESM
         elseif (srcName .eq. "HYD") then
           srcFlds=>fldsFrHyd
         elseif (srcName .eq. "GWR") then
-          srcFlds=>fldsFrHyd
+          srcFlds=>fldsFrGwr
         elseif (srcName .eq. "MED") then
           nullify(srcFlds)
         else
@@ -1029,7 +1218,7 @@ module ESM
         elseif (dstName .eq. "HYD") then
           dstFlds=>fldsToHyd
         elseif (dstName .eq. "GWR") then
-          dstFlds=>fldsToHyd
+          dstFlds=>fldsToGwr
         elseif (dstName .eq. "MED") then
           nullify(dstFlds)
         else
@@ -1137,7 +1326,7 @@ module ESM
               endif
             endif
           enddo
-  
+
           ! store the modified cplList in CplList attribute of connector i
           call NUOPC_CompAttributeSet(connectorList(i), &
             name="CplList", valueList=cplList, rc=rc)
@@ -1146,7 +1335,7 @@ module ESM
           deallocate(cplList)
         endif
       enddo
-  
+
       deallocate(connectorList)
     else
       call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
@@ -1156,5 +1345,5 @@ module ESM
     endif
 
   end subroutine
-  
+
 end module
