@@ -259,6 +259,13 @@ if [ ! -f $NLC_EXE ]; then
   exit 1
 fi
 
+# Check NLC_FD
+NLC_FD=${DIR_APP}/fd_nlc.yaml
+if [ ! -f $NLC_FD ]; then
+  echo "ERROR: fd_nlc.yaml field dictionary does not exist."
+  exit 1
+fi
+
 # Set RUNDIR and create RUNDIR
 RUNDIR=${NLC_DIR}/run/$USECASE
 if [ -d $RUNDIR ]; then
@@ -338,6 +345,7 @@ fi
 
 # Copy executable to RUNDIR
 cp $NLC_EXE $RUNDIR/.
+cp $NLC_FD  $RUNDIR/.
 
 # Copy runconfig and process use case settings
 cp $NLC_RUNCONFIG $RUNDIR/nlc.runconfig

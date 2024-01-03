@@ -18,9 +18,7 @@ program esmApp
 
   use ESMF
   use ESM, only: esmSS => SetServices
-  use Fields, only: field_dictionary_add, &
-                    fldsFrLnd, fldsToLnd, &
-                    fldsFrHyd, fldsToHyd
+  use NUOPC, only: NUOPC_FieldDictionarySetup
 
   implicit none
 
@@ -51,26 +49,12 @@ program esmApp
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
   ! Setting up the NUOPC field dictionary
-  call field_dictionary_add(fldsFrLnd, rc=rc)
+  call NUOPC_FieldDictionarySetup(fileName="fd_nlc.yaml", rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
-  call field_dictionary_add(fldsToLnd, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    call ESMF_Finalize(endflag=ESMF_END_ABORT)
-  call field_dictionary_add(fldsFrHyd, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    call ESMF_Finalize(endflag=ESMF_END_ABORT)
-  call field_dictionary_add(fldsToHyd, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
   ! Create the earth system Component
   esmComp = ESMF_GridCompCreate(name="esm", rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

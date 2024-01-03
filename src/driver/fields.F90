@@ -40,7 +40,7 @@ module Fields
     character(len=64) :: standardName2 = "dummy2"
   end type med_fld_syn_type
 
-  type(med_fld_type),target,dimension(22) :: fldsFrLnd = (/&
+  type(med_fld_type),target,dimension(21) :: fldsFrLnd = (/&
     med_fld_type("bare_soil_evaporation"                   ,"edir"    ,&
                  "W m-2",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
     med_fld_type("liquid_fraction_of_soil_moisture_layer_1","smliqfracl1",&
@@ -73,8 +73,6 @@ module Fields
                  "mm",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
     med_fld_type("soil_column_drainage"                    ,"soldrain"    ,&
                  "mm",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
-    med_fld_type("total_water_flux"                        ,"wtrflx"    ,&
-                 "kg m-2 s-1",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
     med_fld_type("total_water_flux_layer_1"                ,"wtrflx1"    ,&
                  "kg m-2 s-1",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
     med_fld_type("total_water_flux_layer_2"                ,"wtrflx2"    ,&
@@ -208,9 +206,7 @@ module Fields
     med_fld_type("soil_moisture_fraction_layer_4"          ,"smfracl4"   ,&
                  "-",FLD_REMAP_BILINR,FLD_MASK_NNE,1)/)
 
-  type(med_fld_type),target,dimension(5) :: fldsToGwr = (/&
-    med_fld_type("total_water_flux"                        ,"wtrflx"    ,&
-                 "kg m-2 s-1",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
+  type(med_fld_type),target,dimension(4) :: fldsToGwr = (/&
     med_fld_type("total_water_flux_layer_1"                ,"wtrflx1"    ,&
                  "kg m-2 s-1",FLD_REMAP_BILINR,FLD_MASK_NNE,0),&
     med_fld_type("total_water_flux_layer_2"                ,"wtrflx2"    ,&
