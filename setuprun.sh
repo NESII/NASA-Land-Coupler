@@ -333,12 +333,22 @@ fi
 
 # ParFlow setup
 if [[ $RUNCONFIG == *"gwr"* ]]; then
-  DATA_HYD=$DATA_ROOT/PARFLOW/$USECASE
-  if [ -d $DATA_HYD ]; then
-    cp $DATA_HYD/*.py $RUNDIR/.
-    ln -s $DATA_HYD/PARFLOW_INPUTS $RUNDIR/PARFLOW_INPUTS
+  DATA_GWR=$DATA_ROOT/PARFLOW/$USECASE
+  if [ -d $DATA_GWR ]; then
+    ensemble=`find $DATA_GWR -name 'GWR-*'`
+    for data_gwr_member in ${ensemble}; do
+      member=`basename $data_gwr_member`
+      rundir_member=$RUNDIR/$member
+      mkdir -p $rundir_member
+      cp $data_gwr_member/*.py $rundir_member/.
+      ln -s $data_gwr_member/PARFLOW_INPUTS $rundir_member/PARFLOW_INPUTS
+    done
+    if [ -z "$ensemble" ]; then
+      cp $DATA_GWR/*.py $RUNDIR/.
+      ln -s $DATA_GWR/PARFLOW_INPUTS $RUNDIR/PARFLOW_INPUTS
+    fi
   else
-    echo "ERROR: DATA_HYD directory not found [$DATA_HYD]"
+    echo "ERROR: DATA_GWR directory not found [$DATA_GWR]"
     exit 1
   fi
 fi

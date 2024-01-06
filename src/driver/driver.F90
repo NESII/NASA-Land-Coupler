@@ -506,7 +506,7 @@ module ESM
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, file=__FILE__)) return  ! bail out
           call ESMF_AttributeSet(child, name="multi_instance_gwr", &
-            value="true", convention="NUOPC", purpose="Instance", rc=rc)
+            value=.true., convention="NUOPC", purpose="Instance", rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, file=__FILE__)) return  ! bail out
         enddo
