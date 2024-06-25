@@ -4,13 +4,16 @@
 #SBATCH --time=__TIME__
 #SBATCH --partition=compute
 #SBATCH --account=s1189
-#SBATCH --constraint=hasw
+#SBATCH --constraint=sky
 #SBATCH --qos=serial
 #SBATCH --output=job.log
 
 export NLC_DIR=${SLURM_SUBMIT_DIR}/../..
 export NLC_JOBID=${SLURM_JOB_ID}
-source ${NLC_DIR}/env/discover.intel.20.0.0
+
+source /etc/profile.d/modules.sh
+module use "${NLC_DIR}/env/discover-12.5"
+module load "intel-2021.4.0"
 
 # set umask
 umask 022

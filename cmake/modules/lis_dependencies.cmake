@@ -189,4 +189,22 @@ function(target_link_lis_dependencies lis_target)
     endif ()
   endif()
 
+  # RPC
+  if (DEFINED ENV{LIS_RPC} AND NOT DEFINED LIS_RPC)
+    set(LIS_RPC $ENV{LIS_RPC} CACHE FILEPATH "Path to RPC directory")
+  endif ()
+  if (EXISTS ${LIS_RPC})
+    set(RPC_FOUND TRUE CACHE BOOL "RPC directory file found" FORCE)
+    add_library(LIS::RPC UNKNOWN IMPORTED)
+    find_library(RPC_LIB NAMES tirpc PATHS ${LIS_RPC} PATH_SUFFIXES lib lib64)
+    set_target_properties(LIS::RPC PROPERTIES
+      IMPORTED_LOCATION "${RPC_LIB}")
+    target_link_libraries(${lis_target} PUBLIC LIS::RPC)
+  else()
+    set(RPC_FOUND FALSE CACHE BOOL "RPC directory NOT found" FORCE)
+    if (NOT DEFINED LIS_RPC)
+      message(WARNING "LIS_RPC not defined")
+    endif ()
+  endif()
+
 endfunction()

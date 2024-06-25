@@ -14,11 +14,8 @@ usage () {
   printf "Usage: $0 [OPTIONS]...\n"
   printf "\n"
   printf "OPTIONS\n"
-  printf "  --system=SYSTEM\n"
-  printf "      name of machine (e.g. 'discover', 'cheyenne'\n"
-  printf "  --compiler=COMPILER\n"
-  printf "      compiler to use; valid options are 'intel.X.Y.Z', \n"
-  printf "      'gnu.X.Y.Z'; default is system dependent.\n"
+  printf "  --env-auto-off\n"
+  printf "      do not load preconfigured environment based on system\n"
   printf "  --build-type=BUILD_TYPE\n"
   printf "      build type; valid options are 'debug', 'release'.\n"
   printf "  --auto\n"
@@ -34,24 +31,18 @@ settings () {
   printf "\n"
   printf "  NLC_DIR=${NLC_DIR}\n"
   printf "  SYSTEM=${SYSTEM}\n"
-  printf "  COMPILER=${MYCOMPILER}\n"
+  printf "  ENV_AUTO=${ENV_AUTO}\n"
   printf "  BUILD_TYPE=${BUILD_TYPE}\n"
   printf "  INTERACTIVE=${INTERACTIVE}\n"
   printf "  VERBOSE=${VERBOSE}\n"
   printf "\n"
 }
 
-# find system name
-find_system () {
-    local sysname=`hostname`
-    sysname="${sysname//[[:digit:]]/}"
-    echo "$sysname"
-}
-
 # default settings
 NLC_DIR=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )" && pwd -P)
 SYSTEM=""
-MYCOMPILER=""
+ENV_DIR="${NLC_DIR}/env"
+ENV_AUTO=true
 BUILD_TYPE="Release"
 INTERACTIVE=true
 VERBOSE=false
@@ -61,12 +52,9 @@ RC=0
 while :; do
   case $1 in
     --help|-h) usage; exit 0 ;;
-    --system=?*) SYSTEM=${1#*=} ;;
-    --system) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
-    --system=) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
-    --compiler=?*) MYCOMPILER=${1#*=} ;;
-    --compiler) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
-    --compiler=) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
+    --env-auto-off) ENV_AUTO=false ;;
+    --env-auto-off=?*) printf "ERROR: $1 argument ignored.\n"; usage; exit 1 ;;
+    --env-auto-off=) printf "ERROR: $1 argument ignored.\n"; usage; exit 1 ;;
     --build-type=?*) BUILD_TYPE=${1#*=} ;;
     --build-type) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
     --build-type=) printf "ERROR: $1 requires an argument.\n"; usage; exit 1 ;;
@@ -84,42 +72,23 @@ done
 
 set -u
 
+source scripts/setupenv.sh
+
 # automatically determine system
 if [ -z "${SYSTEM}" ] ; then
   SYSTEM=$(find_system)
 fi
 
-# automatically determine compiler
-if [ -z "${MYCOMPILER}" ] ; then
-  if [ "${SYSTEM}" = "discover" ]; then
-    MYCOMPILER="intel.19.1.3"
-  elif [ "${SYSTEM}" = "cheyenne" ]; then
-    MYCOMPILER="intel.19.1.1"
-  else
-    printf "ERROR: no default compiler for ${SYSTEM}\n"
-    printf "\n"
-    exit 1
-  fi
+# auto modulefile
+export NLC_DIR="${NLC_DIR}"
+if [ "${ENV_AUTO}" = true ] ; then
+  auto_environment ${SYSTEM} ${ENV_DIR}
 fi
 
 # print settings
 if [ "${VERBOSE}" = true ] ; then
   settings
 fi
-
-# load environment for this system/compiler combination
-ENVFILE="${NLC_DIR}/env/${SYSTEM}.${MYCOMPILER}"
-if [ ! -f "${ENVFILE}" ]; then
-  printf "ERROR: environment file does not exist for ${SYSTEM}.${MYCOMPILER}\n"
-  printf "Please select one of the following configurations\n"
-  for f in "${NLC_DIR}/env"/*
-  do
-    printf "  $(basename $f)\n"
-  done
-  printf "\n"
-  exit 1
-fi
-source ${ENVFILE}
 
 printf "*************************************************\n"
 printf "***          LIS BUILD CONFIGURATION          ***\n"
@@ -148,6 +117,10 @@ if [ ! -f "make/configure.lis" ]; then
   RC=1
 fi
 printf "\n"
+printf "WARNING: VIC will be disabled in user.cfg\n"
+printf "VIC.4.1.1: Off\n" >  "$NLC_DIR/src/LISF/lis/make/user.cfg"
+printf "VIC.4.1.2: Off\n" >> "$NLC_DIR/src/LISF/lis/make/user.cfg"
+printf "\n"
 
 printf "*************************************************\n"
 printf "***       WRFHYDRO BUILD CONFIGURATION        ***\n"
@@ -162,16 +135,16 @@ else
 fi
 if [ "${INTERACTIVE}" = true ]; then
   ./configure; RC=$?
-elif [[ "${MYCOMPILER}" == *"cray"* ]]; then
+elif [[ "${COMPILER}" == *"cray"* ]]; then
   echo "6" | ./configure; RC=$?
-elif [[ "${MYCOMPILER}" == *"intel"* ]]; then
+elif [[ "${COMPILER}" == *"intel"* ]]; then
   echo "3" | ./configure; RC=$?; echo $RC
-elif [[ "${MYCOMPILER}" == *"gnu"* ]]; then
+elif [[ "${COMPILER}" == *"gnu"* ]]; then
   echo "2" | ./configure; RC=$?
-elif [[ "${MYCOMPILER}" == *"pgi"* ]]; then
+elif [[ "${COMPILER}" == *"pgi"* ]]; then
   echo "1" | ./configure; RC=$?
 else
-  printf "ERROR: compiler unknown ${MYCOMPILER}\n" 
+  printf "ERROR: compiler unknown ${COMPILER}\n" 
   exit 1
 fi
 if [ ! -f "macros" ]; then
