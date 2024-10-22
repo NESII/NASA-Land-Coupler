@@ -94,8 +94,8 @@ printf "*************************************************\n"
 printf "***          LIS BUILD CONFIGURATION          ***\n"
 printf "*************************************************\n"
 if [ ! -f "$NLC_DIR/src/LISF/lis/configure" ]; then
-  printf "ERROR: LIS configure file is missing\n"
-  printf "       \tgit submodule init\n" 
+  printf "\e[31mERROR: LIS configure file is missing\e[0m\n"
+  printf "       \tgit submodule init\n"
   printf "       \tgit submodule update\n"
   exit 1
 else
@@ -117,7 +117,7 @@ if [ ! -f "make/configure.lis" ]; then
   RC=1
 fi
 printf "\n"
-printf "WARNING: VIC will be disabled in user.cfg\n"
+printf "\e[33mWARNING: VIC will be disabled in user.cfg\e[0m\n"
 printf "VIC.4.1.1: Off\n" >  "$NLC_DIR/src/LISF/lis/make/user.cfg"
 printf "VIC.4.1.2: Off\n" >> "$NLC_DIR/src/LISF/lis/make/user.cfg"
 printf "\n"
@@ -126,7 +126,7 @@ printf "*************************************************\n"
 printf "***       WRFHYDRO BUILD CONFIGURATION        ***\n"
 printf "*************************************************\n"
 if [ ! -f "$NLC_DIR/src/wrf_hydro_nwm/trunk/NDHMS/configure" ]; then
-  printf "ERROR: WRFHYDRO configure file is missing\n"
+  printf "\e[31mERROR: WRFHYDRO configure file is missing\e[0m\n"
   printf "       \tgit submodule init\n"
   printf "       \tgit submodule update\n"
   exit 1
@@ -144,7 +144,7 @@ elif [[ "${COMPILER}" == *"gnu"* ]]; then
 elif [[ "${COMPILER}" == *"pgi"* ]]; then
   echo "1" | ./configure; RC=$?
 else
-  printf "ERROR: compiler unknown ${COMPILER}\n" 
+  printf "\e[31mERROR: compiler unknown ${COMPILER}\e[0m\n"
   exit 1
 fi
 if [ ! -f "macros" ]; then
@@ -153,8 +153,9 @@ fi
 printf "\n"
 
 if [ $RC -ne 0 ]; then
-  printf "ERROR: configuration failed.\n"
+  printf "\e[31mERROR: configuration failed\e[0m\n"
   exit 1
 fi
 
+printf "\e[32mSUCCESS: configuration complete\e[0m\n"
 exit 0

@@ -82,7 +82,7 @@ module load mpi/impi/2021.4.0
 
 module load tview/2019.0.4
 module load git/2.24.0
-module load cmake/3.15.5
+module load cmake/3.28.2
 module load python/GEOSpyD/Min4.11.0_py3.9
 
 set def_nlc_dir $env(NLC_DIR)

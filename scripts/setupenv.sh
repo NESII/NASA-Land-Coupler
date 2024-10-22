@@ -36,7 +36,8 @@ auto_environment () {
       BATCH_SYS="${BATCH_SYS:-sbatch}"
       CPPERNODE="${CPPERNODE:-28}"
       DATA_ROOT="${DATA_ROOT:-/discover/nobackup/projects/nu-wrf/lishydro/data}"
-      module use "${2}/discover/"
+      echo "${2}/discover/"
+      module use "${2}/discover-15.4/"
       module load "intel-2023.2.1";;
     *) printf "ERROR: no modulefile file for ${1}\n"; exit 1 ;;
   esac
